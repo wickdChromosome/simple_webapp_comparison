@@ -10,6 +10,7 @@
 #include <arpa/inet.h>
 #include <err.h>
 #include <wait.h>
+#include <signal.h>
 
 #define PORT 80
 #define HOST_IP "167.99.229.68"
@@ -31,7 +32,7 @@ char* replace_ip(char* html_template, char* ip_addr, char* response) {
 void handle_connection(char* html_template, int client_fd, char* ip_addr) {
 
 	//response is same size as template
-	char* response = (char*)malloc(sizeof(html_template));
+	char* response = (char*)malloc(sizeof(char) * (strlen(html_template) + 1) );
 	
 	response = replace_ip(html_template, ip_addr, response);
 
@@ -41,22 +42,23 @@ void handle_connection(char* html_template, int client_fd, char* ip_addr) {
 	while(thistok) {
 	
 		write(client_fd, thistok, strlen(thistok)); 
-		puts(thistok);
 		thistok = strtok(NULL, "^");
 
 	
 	}
 
 	free(response);
+	sleep(1);
 
-
+	close(client_fd);	
+	exit(1);
 
 }
 
 
 int main(void) {
 
-	char html_template[] = "HTTP/1.1 200 OK\r\n^"
+	char html_template_str[] = "HTTP/1.1 200 OK\r\n^"
 	"Content-Type: text/html; charset=UTF-8\r\n\r\n^"
 	"<html>^"
 	"<head>^"
@@ -69,15 +71,18 @@ int main(void) {
 	"Leo urna molestie at elementum eu. Neque convallis a cras semper auctor neque. Sed blandit libero volutpat sed cras ornare arcu. Euismod elementum nisi quis eleifend quam adipiscing vitae. Vestibulum lorem sed risus ultricies tristique nulla. Neque vitae tempus quam pellentesque nec nam aliquam sem et. Pellentesque sit amet porttitor eget dolor morbi non arcu. Sit amet mauris commodo quis imperdiet. Duis at tellus at urna condimentum mattis. Vitae proin sagittis nisl rhoncus mattis rhoncus urna neque viverra. A iaculis at erat pellentesque adipiscing commodo elit at. Maecenas pharetra convallis posuere morbi leo. </p>^"
 	"</html>^";
 
-/*
-	char response[] = "HTTP/1.1 200 OK\r\n"
-"Content-Type: text/html; charset=UTF-8\r\n\r\n"
-"<!DOCTYPE html><html><head><title>Bye-bye baby bye-bye</title>"
-"<style>body { background-color: #111 }"
-"h1 { font-size:4cm; text-align: center; color: black;"
-" text-shadow: 0 0 2mm red}</style></head>"
-"<body><h1>Goodbye, world!</h1></body></html>\r\n";
- */
+
+	char* html_template = malloc(sizeof(char) * (strlen(html_template_str) + 1) );
+	strcpy(html_template, html_template_str);
+
+	/* Become deamon + unstopable and no zombies children (= no wait()) */	
+//	if(fork() != 0) {
+//		return 0; /* parent returns OK to shell */
+//	}
+//	(void)signal(SIGCLD, SIG_IGN); /* ignore child death */
+//	(void)signal(SIGHUP, SIG_IGN); /* ignore terminal hangups */
+//	(void)setpgrp();    /* break away from process group */
+
 
 	int one = 1, client_fd;
 	struct sockaddr_in svr_addr, cli_addr;
@@ -104,36 +109,39 @@ int main(void) {
 	for (;;) {
 		client_fd = accept(sock, (struct sockaddr *) &cli_addr, &sin_len);
 		if (client_fd == -1) {
-			perror("Can't accept");
+			err(1,"ERROR: Can't accept connection");
 			continue;
 		}
 
-		int pid, status;
-		pid = fork();
-		if (pid == 0) {
+		int pid;
 
-			//print ip
-			struct sockaddr_in* p_addr =  &cli_addr;
-			char ip_str[INET_ADDRSTRLEN];
-			inet_ntop( AF_INET, &p_addr->sin_addr, ip_str, INET_ADDRSTRLEN );
-			printf("INFO: Connection from %s\n", ip_str);
+		if((pid = fork()) < 0) {
+			err(1,"ERROR: Fork unsuccessful");
+		} else {
+			if(pid == 0) {   /* child */
 
-			//render page	
-			handle_connection(html_template, client_fd, ip_str);
+				//let go of original socket
+				(void)close(sock);
 
-			puts("INFO: Served page");	
+				//print ip
+				struct sockaddr_in* p_addr =  &cli_addr;
+				char ip_str[INET_ADDRSTRLEN];
+				inet_ntop( AF_INET, &p_addr->sin_addr, ip_str, INET_ADDRSTRLEN );
+				printf("INFO: Connection from %s\n", ip_str);
 
-			close(client_fd);	
-			exit(0);
-		}
+				//render page	
+				handle_connection(html_template, client_fd, ip_str);
+
+			} else {   /* parent */
 		
-		int endID = waitpid(pid, &status, WNOHANG);
-		if (endID == -1) {          
-			perror("ERROR: waitpid error or child already terminated:");
+				(void)close(client_fd);
+		
+			}
+
+
 		}
-		close(client_fd);	
 
 	}
-
+	free(html_template);
 
 }
