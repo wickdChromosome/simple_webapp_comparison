@@ -9,9 +9,10 @@
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <err.h>
+#include <wait.h>
 
-#define PORT 8080
-#define HOST_IP "127.0.0.1"
+#define PORT 80
+#define HOST_IP "167.99.229.68"
 
 char* replace_ip(char* html_template, char* ip_addr, char* response) {
 
@@ -107,7 +108,9 @@ int main(void) {
 			continue;
 		}
 
-		if (!fork()) {
+		int pid, status;
+		pid = fork();
+		if (pid == 0) {
 
 			//print ip
 			struct sockaddr_in* p_addr =  &cli_addr;
@@ -123,7 +126,11 @@ int main(void) {
 			close(client_fd);	
 			exit(0);
 		}
-
+		
+		int endID = waitpid(pid, &status, WNOHANG);
+		if (endID == -1) {          
+			perror("ERROR: waitpid error or child already terminated:");
+		}
 		close(client_fd);	
 
 	}
