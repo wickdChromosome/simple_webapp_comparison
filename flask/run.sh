@@ -1,3 +1,2 @@
-export FLASK_APP=server.py
-python3 -m flask run
+gunicorn --threads 4 -b 167.99.229.68:80 server:app
 
