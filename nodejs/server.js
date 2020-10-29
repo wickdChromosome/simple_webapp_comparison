@@ -1,4 +1,10 @@
+
+//set the number of threads in the threadpool to be 4
+process.env.UV_THREADPOOL_SIZE = 12;
+
+
 var http = require('http');
+
 
 var html = ` 
 	<html>
@@ -29,6 +35,6 @@ http.createServer(function (req, res) {
 	(req.connection.socket ? req.connection.socket.remoteAddress : null);
 
 	res.writeHead(200, {'Content-Type': 'text/html'});
-	res.end(html.replace('IP            ', ip));
+	res.end(html.replace('IP            ', ip.replace("::ffff:","")));
 
-}).listen(8080);
+}).listen(80);
