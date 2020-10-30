@@ -1,12 +1,11 @@
-#? stdtmpl(subsChar = '$', metaChar = '#')
+#? stdtmpl
 #
 #proc renderMain*(ip: string): string =
-#  result = ""
 <html>
     <head>
     </head>
     <body>
-        <h1>Your ip address is: ${ip}</h1>
+        <h1>Your ip address is: $ip </h1>
 
         <p> Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Amet purus gravida quis blandit turpis cursus in hac. Id aliquet lectus proin nibh nisl condimentum id venenatis. Mi in nulla posuere sollicitudin aliquam. Vulputate odio ut enim blandit volutpat maecenas. Donec adipiscing tristique risus nec. Tempus iaculis urna id volutpat lacus laoreet non curabitur gravida. Dui accumsan sit amet nulla facilisi morbi tempus iaculis urna. Nec ultrices dui sapien eget mi proin sed libero. Dui ut ornare lectus sit. Dictumst quisque sagittis purus sit amet. Non odio euismod lacinia at quis. Nullam vehicula ipsum a arcu cursus. Vestibulum lectus mauris ultrices eros.
 
